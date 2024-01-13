@@ -1,19 +1,20 @@
-// Task 2 : Connecting with mongo db data base 
+// TASK 3 : Use mongoose instead of mongodb driver
+
 const http = require("http");
-const { MongoClient } = require("mongodb");
+const mongoose = require("mongoose");
 
 const PORT = 8000;
+
 const uri =
   "mongodb+srv://unnatig1920:unnatigupta@cluster0.uokvn7o.mongodb.net/";
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
 
 async function startServer() {
   try {
-    await client.connect();
-    console.log("Connected to Mongo Database");
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB");
 
     const server = http.createServer((req, res) => {
       res.statusCode = 200;
@@ -21,7 +22,7 @@ async function startServer() {
       res.end("Hello World\n");
     });
 
-    server.listen(PORT, () => {
+    server.listen((PORT) => {
       console.log("Server running");
     });
   } catch (err) {
