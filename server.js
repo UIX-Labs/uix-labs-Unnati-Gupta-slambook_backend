@@ -1,119 +1,29 @@
-//Create Document for slam book
-const http = require('http');
-const url = require('url');
-const SlamBook = require('./model');
-
-const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const endpoint = parsedUrl.pathname;
-  const method = req.method;
-  switch (method) {
-    case 'GET':
-      handleGetRequest(endpoint, parsedUrl, res);
-      break;
-    case 'POST':
-      handlePostRequest(endpoint, req, res);
-      break;
-    case 'PUT':
-      handlePutRequest(endpoint, req, res);
-      break;
-    case 'DELETE':
-      handleDeleteRequest(endpoint, res);
-      break;
-    default:
-      res.writeHead(405, { 'Content-Type': 'text/plain' });
-      res.end('Method Not Allowed');
+app.get('/slambook', async (req, res) => {
+  try {
+    
+    const entries = await SlamBook.find();
+    res.status(200).json(entries);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-const handlePostRequest = (endpoint, req, res) => {
-  if (endpoint === '/slambook') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
 
-    req.on('end', () => {
-      const entryData = JSON.parse(body);
-      const newEntry = SlamBook.create(entryData);
-      res.writeHead(201, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(newEntry));
-    });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
-  }
-};
-const handleGetRequest = (endpoint, parsedUrl, res) => {
-  if (endpoint === '/slambook') {
-    if (parsedUrl.pathname === '/slambook' && !parsedUrl.query.id) {
-      const entries = SlamBook.find();
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(entries));
-    } else if (parsedUrl.pathname === '/slambook' && parsedUrl.query.id) {
-      const entry = SlamBook.findById(parsedUrl.query.id);
-      if (entry) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(entry));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Entry Not Found');
-      }
-    }
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
-  }
-};
+app.get('/slambook/:id', async (req, res) => {
+  const entryId = req.params.id;
 
-const handlePutRequest = (endpoint, req, res) => {
-  if (endpoint.startsWith('/slambook/')) {
-    const entryId = endpoint.split('/').pop();
-    let body = ' ';
+  try {
+   
+    const entry = await SlamBook.findById(entryId);
 
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-
-    req.on('end', () => {
-      const updateData = JSON.parse(body);
-
-      const updatedEntry = SlamBook.findByIdAndUpdate(entryId, updateData);
-
-      if (updatedEntry) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(updatedEntry));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Entry Not Found');
-      }
-    });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
-  }
-};
-
-const handleDeleteRequest = (endpoint, res) => {
-  if (endpoint.startsWith('/slambook/')) {
-    const entryId = endpoint.split('/').pop();
-
-    const deletedEntry = SlamBook.findByIdAndDelete(entryId);
-
-    if (deletedEntry) {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(deletedEntry));
+    if (entry) {
+      res.status(200).json(entry);
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Entry Not Found');
+      res.status(404).json({ error: 'Not Found' });
     }
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-};
-
-const PORT = 8000;
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
